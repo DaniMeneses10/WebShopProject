@@ -1,0 +1,18 @@
+# Archivos de compilación y dependencias
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.log
+*.cache
+*.vs/
+.vscode/
+
+# Archivos de configuración local
+appsettings.Development.json
+appsettings.Local.json
+
+# Migraciones y caché de EF Core
+Migrations/
+*.db
