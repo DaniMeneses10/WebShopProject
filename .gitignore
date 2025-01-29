@@ -12,7 +12,16 @@ obj/
 # Archivos de configuración local
 appsettings.Development.json
 appsettings.Local.json
+launchSettings.json
 
 # Migraciones y caché de EF Core
 Migrations/
 *.db
+
+# Archivos específicos de Visual Studio
+*.user
+*.suo
+*.csproj.user
+*.vcxproj.user
+*.ncrunch*
+*.ideavimrc
