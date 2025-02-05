@@ -21,10 +21,11 @@ public class ProductsController : ControllerBase
     {
         var products = await _productRepository.GetAllAsync();
         if (products == null || !products.Any())
-            throw new KeyNotFoundException("No products found.");
+            return NotFound("No products found.");
 
         return Ok(products);
     }
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetById(int id)

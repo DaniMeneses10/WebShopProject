@@ -17,8 +17,16 @@ public class ShoppingCartController : ControllerBase
     [HttpGet]
     public ActionResult<ShoppingCart> GetCart()
     {
-        return Ok(_cartService.GetCart());
+        var cart = _cartService.GetCart();
+
+        if (cart == null || cart.Items.Count == 0)
+        {
+            return Ok(new { message = "Cart is empty", items = new List<ShoppingCartItem>() });
+        }
+
+        return Ok(cart);
     }
+
 
     [HttpPost("add")]
     public IActionResult AddToCart([FromBody] ShoppingCartItem item)

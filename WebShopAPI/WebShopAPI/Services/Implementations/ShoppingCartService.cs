@@ -33,14 +33,37 @@ namespace WebShopAPI.Services.Implementations
 
         public ShoppingCart GetCart()
         {
-            var cartJson = _session.GetString(CartKey);
-            return cartJson == null ? new ShoppingCart() : JsonConvert.DeserializeObject<ShoppingCart>(cartJson);
+            if (_httpContextAccessor.HttpContext == null)
+            {
+                Console.WriteLine("HttpContext is NULL");
+                throw new InvalidOperationException("HttpContext is not available.");
+            }
+
+            if (_httpContextAccessor.HttpContext.Session == null)
+            {
+                Console.WriteLine("Session is NULL - Initializing session...");
+                _httpContextAccessor.HttpContext.Session.SetString(CartKey, JsonConvert.SerializeObject(new ShoppingCart()));
+            }
+
+            var cartJson = _httpContextAccessor.HttpContext.Session.GetString(CartKey);
+            if (string.IsNullOrEmpty(cartJson))
+            {
+                Console.WriteLine("Cart is NULL or Empty - Creating new ShoppingCart");
+                return new ShoppingCart();
+            }
+
+            Console.WriteLine($"Cart found before checkout: {cartJson}"); // ✅ Imprimir carrito antes de checkout
+            return JsonConvert.DeserializeObject<ShoppingCart>(cartJson);
         }
+
 
         public void SaveCart(ShoppingCart cart)
         {
-            _session.SetString(CartKey, JsonConvert.SerializeObject(cart));
+            var json = JsonConvert.SerializeObject(cart);
+            Console.WriteLine($"Saving cart to session: {json}");
+            _httpContextAccessor.HttpContext.Session.SetString(CartKey, json);
         }
+
 
         public async Task AddToCart(ShoppingCartItem item) // ✅ Changed to async Task
         {
@@ -88,9 +111,14 @@ namespace WebShopAPI.Services.Implementations
 
         public async Task<Order> CheckoutAsync(int customerId)
         {
+            string test = ("Session ID at checkout: " + _httpContextAccessor.HttpContext.Session.Id);
             var cart = GetCart();
+
             if (!cart.Items.Any())
+            {
+                Console.WriteLine("Cart is empty during checkout!");
                 throw new InvalidOperationException("Cannot checkout with an empty cart.");
+            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -99,43 +127,26 @@ namespace WebShopAPI.Services.Implementations
                 var order = new Order
                 {
                     CustomerID = customerId,
-                    OrderDate = DateTime.UtcNow
+                    OrderDate = DateTime.UtcNow,
+                    TotalAmount = cart.Items.Sum(i => i.Quantity * i.Price) // Ensure total is calculated
                 };
 
                 order = await _orderRepository.AddAsync(order);
-
-                foreach (var item in cart.Items)
-                {
-                    var product = await _productRepository.GetByIdAsync(item.ProductID);
-                    if (product == null)
-                        throw new KeyNotFoundException($"Product with ID {item.ProductID} no longer exists.");
-
-                    if (product.Stock < item.Quantity)
-                        throw new InvalidOperationException($"Not enough stock available for {product.Name}.");
-
-                    product.Stock -= item.Quantity;
-                    await _productRepository.UpdateAsync(product);
-
-                    var productsOrder = new ProductsOrder
-                    {
-                        OrderID = order.OrderID,
-                        ProductID = item.ProductID,
-                        Quantity = item.Quantity,
-                        LineTotal = item.Quantity * item.Price
-                    };
-
-                    await _productsOrderRepository.AddAsync(productsOrder);
-                }
+                Console.WriteLine($"New Order Created: OrderID = {order.OrderID}"); // ✅ Debug Log
 
                 await transaction.CommitAsync();
                 ClearCart();
                 return order;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Checkout Error: {ex.Message}");
                 await transaction.RollbackAsync();
                 throw;
             }
         }
+
+
+
     }
 }
