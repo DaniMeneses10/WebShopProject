@@ -11,7 +11,6 @@ export const fetchCart = createAsyncThunk("cart/fetch", async () => {
 
 // 🔹 Agregar al Carrito
 export const addToCart = createAsyncThunk("cart/addToCart", async (product) => {
-  console.log("Enviando producto al carrito:", product);
   await api.post("/ShoppingCart/add", product);
   return product;
 });
@@ -33,9 +32,6 @@ const cartSlice = createSlice({
   name: "cart",
   initialState: { items: [], totalAmount: 0 },
   reducers: {
-    removeFromCart: (state, action) => {
-      state.items = state.items.filter((item) => item.productID !== action.payload);
-    },
     clearCart: (state) => {
       state.items = [];
       state.totalAmount = 0;
@@ -56,7 +52,11 @@ const cartSlice = createSlice({
         } else {
           state.items.push({ ...action.payload, quantity: 1 });
         }
-      });
+      })
+      .addCase(removeFromCart.fulfilled, (state, action) => {
+        console.log("Producto eliminado:", action.payload);
+        state.items = state.items.filter((item) => item.productID !== action.payload);
+      }); // ✅ Ahora removeFromCart actualiza correctamente el estado
   },
 });
 
