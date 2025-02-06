@@ -1,24 +1,75 @@
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchCart, removeFromCart, updateCartItem, clearCart } from "../store/cartSlice";
-import { useState } from "react";
-import api from "../services/api"; 
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../services/api";
+
+// 🔹 Obtener Carrito
+export const fetchCart = createAsyncThunk("cart/fetch", async () => {
+  const response = await api.get("/ShoppingCart");
+  return response.data.items || [];
+});
+
+// 🔹 Agregar al Carrito
+export const addToCart = createAsyncThunk("cart/addToCart", async (product) => {
+  console.log("Enviando producto al carrito:", product);
+  await api.post("/ShoppingCart/add", product);
+  return product;
+});
+
+// 🔹 Eliminar del Carrito
+export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (productId) => {
+  await api.delete(`/ShoppingCart/remove/${productId}`);
+  return productId;
+});
+
+// 🔹 Limpiar Carrito
+export const clearCart = createAsyncThunk("cart/clearCart", async () => {
+  await api.delete("/ShoppingCart/clear");
+  return [];
+});
+
+// 🔹 Slice del Carrito
+const cartSlice = createSlice({
+  name: "cart",
+  initialState: { items: [], totalAmount: 0 },
+  reducers: {
+    removeFromCart: (state, action) => {
+      state.items = state.items.filter((item) => item.productID !== action.payload);
+    },
+    clearCart: (state) => {
+      state.items = [];
+      state.totalAmount = 0;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.items = action.payload;
+      })
+      .addCase(addToCart.fulfilled, (state, action) => {
+        console.log("Producto agregado:", action.payload);
+
+        const existingItem = state.items.find((item) => item.productID === action.payload.productID);
+
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          state.items.push({ ...action.payload, quantity: 1 });
+        }
+      });
+  },
+});
+
+export const { reducer: cartReducer, actions: cartActions } = cartSlice;
 
 export default function Cart() {
   const dispatch = useDispatch();
-  const { items: cartItems, totalAmount } = useSelector((state) => state.cart);
+  const { items: cartItems } = useSelector((state) => state.cart);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // 🔹 Cargar el carrito al iniciar la página
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
-
-  const handleQuantityChange = (productId, quantity) => {
-    if (quantity < 1) return;
-    dispatch(updateCartItem({ productId, quantity }));
-  };
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
@@ -27,22 +78,15 @@ export default function Cart() {
     }
 
     setLoading(true);
-    setError(null);
-    const customerId = 1;
 
     try {
-      const response = await api.post(`/shoppingCart/checkout/${customerId}`); // ✅ Ruta corregida
-      console.log("Checkout response:", response.data);
-
-      if (!response.data.OrderID) {
-        throw new Error("Invalid Order Response");
-      }
+      const response = await api.post(`/ShoppingCart/checkout/1`);
+      if (!response.data.OrderID) throw new Error("Invalid Order Response");
 
       alert(`Order placed successfully! Order ID: ${response.data.OrderID}`);
       dispatch(clearCart());
     } catch (err) {
       console.error("Checkout error:", err);
-      setError("Failed to process order.");
     }
 
     setLoading(false);
@@ -51,7 +95,6 @@ export default function Cart() {
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold">Shopping Cart</h1>
-
       {cartItems.length === 0 ? (
         <p>Your cart is empty.</p>
       ) : (
@@ -60,8 +103,6 @@ export default function Cart() {
             <thead>
               <tr className="bg-gray-200">
                 <th className="border p-2">Product</th>
-                <th className="border p-2">Code</th>
-                <th className="border p-2">Price</th>
                 <th className="border p-2">Quantity</th>
                 <th className="border p-2">Total</th>
                 <th className="border p-2">Actions</th>
@@ -69,25 +110,13 @@ export default function Cart() {
             </thead>
             <tbody>
               {cartItems.map((item) => (
-                <tr key={item.productId} className="text-center">
+                <tr key={item.productID}>
                   <td className="border p-2">{item.name}</td>
-                  <td className="border p-2">{item.code}</td>
-                  <td className="border p-2">${item.price.toFixed(2)}</td>
-                  <td className="border p-2">
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      min="1"
-                      onChange={(e) =>
-                        handleQuantityChange(item.productId, parseInt(e.target.value))
-                      }
-                      className="w-16 p-1 border rounded"
-                    />
-                  </td>
+                  <td className="border p-2">{item.quantity}</td>
                   <td className="border p-2">${(item.quantity * item.price).toFixed(2)}</td>
-                  <td className="border p-2">
-                    <button
-                      onClick={() => dispatch(removeFromCart(item.productId))}
+                  <td>
+                    <button 
+                      onClick={() => dispatch(removeFromCart(item.productID))} 
                       className="bg-red-500 text-white px-3 py-1 rounded"
                     >
                       Remove
@@ -97,19 +126,9 @@ export default function Cart() {
               ))}
             </tbody>
           </table>
-
-          <div className="mt-4 flex justify-between">
-            <h2 className="text-xl font-bold">Total: ${totalAmount.toFixed(2)}</h2>
-            <button
-              onClick={handleCheckout}
-              className={`px-4 py-2 text-white rounded ${loading ? "bg-gray-500" : "bg-green-500"}`}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Checkout"}
-            </button>
-          </div>
-
-          {error && <p className="text-red-500 mt-2">{error}</p>}
+          <button onClick={handleCheckout} disabled={loading} className="bg-green-500 text-white px-4 py-2 mt-4 rounded">
+            {loading ? "Processing..." : "Checkout"}
+          </button>
         </>
       )}
     </div>
