@@ -29,7 +29,7 @@ public class ShoppingCartController : ControllerBase
 
 
     [HttpPost("add")]
-    public IActionResult AddToCart([FromBody] ShoppingCartItem item)
+    public IActionResult AddToCart([FromBody] Product item)
     {
         _cartService.AddToCart(item);
         return Ok(new { Message = "Product added to cart successfully." });
@@ -60,6 +60,6 @@ public class ShoppingCartController : ControllerBase
     public async Task<IActionResult> Checkout(int customerId)
     {
         var order = await _cartService.CheckoutAsync(customerId);
-        return Ok(new { Message = "Order placed successfully!", OrderID = order.OrderID });
+        return Ok(new { Message = "Order placed successfully!", OrderID = order.OrderID, Amount = order.TotalAmount });
     }
 }

@@ -10,7 +10,7 @@ namespace WebShopAPI.Services.Implementations
     public class ShoppingCartService : IShoppingCartService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private ISession _session => _httpContextAccessor.HttpContext?.Session ?? throw new InvalidOperationException("Session is not available.");
+        //private ISession _session => _httpContextAccessor.HttpContext?.Session ?? throw new InvalidOperationException("Session is not available.");
         private readonly IRepository<Product> _productRepository;
         private readonly IRepository<Order> _orderRepository;
         private readonly IRepository<ProductsOrder> _productsOrderRepository;
@@ -33,26 +33,23 @@ namespace WebShopAPI.Services.Implementations
 
         public ShoppingCart GetCart()
         {
-            if (_httpContextAccessor.HttpContext == null)
+            if (_httpContextAccessor.HttpContext?.Session == null)
             {
-                Console.WriteLine("HttpContext is NULL");
-                throw new InvalidOperationException("HttpContext is not available.");
-            }
-
-            if (_httpContextAccessor.HttpContext.Session == null)
-            {
-                Console.WriteLine("Session is NULL - Initializing session...");
-                _httpContextAccessor.HttpContext.Session.SetString(CartKey, JsonConvert.SerializeObject(new ShoppingCart()));
+                Console.WriteLine("❌ Session is NULL.");
+                throw new InvalidOperationException("Session is not available.");
             }
 
             var cartJson = _httpContextAccessor.HttpContext.Session.GetString(CartKey);
+            Console.WriteLine($"🔍 Cart JSON retrieved: {cartJson}");
+
             if (string.IsNullOrEmpty(cartJson))
             {
-                Console.WriteLine("Cart is NULL or Empty - Creating new ShoppingCart");
-                return new ShoppingCart();
+                Console.WriteLine("⚠️ Cart is NULL or empty. Initializing new cart.");
+                var newCart = new ShoppingCart();
+                SaveCart(newCart);
+                return newCart;
             }
 
-            Console.WriteLine($"Cart found before checkout: {cartJson}"); // ✅ Imprimir carrito antes de checkout
             return JsonConvert.DeserializeObject<ShoppingCart>(cartJson);
         }
 
@@ -65,24 +62,25 @@ namespace WebShopAPI.Services.Implementations
         }
 
 
-        public async Task AddToCart(ShoppingCartItem item) // ✅ Changed to async Task
+        public void AddToCart(Product product)
         {
-            var cart = GetCart();
-            var product = await _productRepository.GetByIdAsync(item.ProductID);
+            var cart = GetCart(); // Recuperar carrito existente
+            Console.WriteLine($"🔍 Cart before adding: {JsonConvert.SerializeObject(cart)}");
 
-            if (product == null)
-                throw new KeyNotFoundException($"Product with ID {item.ProductID} not found.");
-
-            if (product.Stock < item.Quantity)
-                throw new InvalidOperationException($"Not enough stock available for {product.Name}.");
-
-            var existingItem = cart.Items.FirstOrDefault(i => i.ProductID == item.ProductID);
+            var existingItem = cart.Items.FirstOrDefault(i => i.ProductID == product.ProductID);
             if (existingItem != null)
-                existingItem.Quantity += item.Quantity;
+            {
+                existingItem.Quantity++;
+                Console.WriteLine($"🛒 Increased quantity for {product.Name}: {existingItem.Quantity}");
+            }
             else
-                cart.Items.Add(item);
+            {
+                cart.Items.Add(new ShoppingCartItem { ProductID = product.ProductID, Name = product.Name, Quantity = 1, Price = product.Price });
+                Console.WriteLine($"✅ Added new item: {product.Name}");
+            }
 
-            SaveCart(cart);
+            SaveCart(cart); // Guardar el carrito actualizado
+            Console.WriteLine($"💾 Cart after adding: {JsonConvert.SerializeObject(cart)}");
         }
 
         public void UpdateCartItem(int productId, int quantity)

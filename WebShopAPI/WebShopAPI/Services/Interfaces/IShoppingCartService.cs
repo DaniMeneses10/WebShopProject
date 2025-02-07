@@ -6,7 +6,7 @@ namespace WebShopAPI.Services.Interfaces
     public interface IShoppingCartService
     {
         ShoppingCart GetCart();
-        Task AddToCart(ShoppingCartItem item); // ✅ Changed to async Task
+        void AddToCart(Product item);
         void UpdateCartItem(int productId, int quantity);
         void RemoveFromCart(int productId);
         void ClearCart();

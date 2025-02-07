@@ -56,7 +56,7 @@ const cartSlice = createSlice({
       .addCase(removeFromCart.fulfilled, (state, action) => {
         console.log("Producto eliminado:", action.payload);
         state.items = state.items.filter((item) => item.productID !== action.payload);
-      }); // ✅ Ahora removeFromCart actualiza correctamente el estado
+      }); 
   },
 });
 
@@ -81,9 +81,10 @@ export default function Cart() {
 
     try {
       const response = await api.post(`/ShoppingCart/checkout/1`);
-      if (!response.data.OrderID) throw new Error("Invalid Order Response");
+      console.log("Backend response:", response.data);
+      if (!response.data.orderID) throw new Error("Invalid Order Response");
 
-      alert(`Order placed successfully! Order ID: ${response.data.OrderID}`);
+      alert(`Order placed successfully! Order ID: ${response.data.orderID}`);
       dispatch(clearCart());
     } catch (err) {
       console.error("Checkout error:", err);

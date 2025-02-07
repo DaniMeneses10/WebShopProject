@@ -4,23 +4,22 @@ using WebShopAPI.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure services in the container
 // Add distributed memory cache (required for sessions)
 builder.Services.AddDistributedMemoryCache();
 
 // Add session support
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set timeout to 30 min
-    options.Cookie.HttpOnly = true; // Prevents client-side access
-    options.Cookie.IsEssential = true; // Required for GDPR compliance
-    options.Cookie.SameSite = SameSiteMode.Lax; // Important for session persistence
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Allow both HTTP & HTTPS
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.None; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
-
 // Add HTTP context accessor (required for session-based services)
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>(); // Permitir acceso a HttpContext
+
 
 // Configure CORS (Cross-Origin Resource Sharing)
 builder.Services.AddCors(options =>

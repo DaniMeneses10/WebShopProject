@@ -32,6 +32,7 @@ export const { reducer: productsReducer } = productSlice;
 export default function Products() {
   const dispatch = useDispatch();
   const { items = [], status, error } = useSelector((state) => state.products);
+  
 
   useEffect(() => {
     dispatch(fetchProducts());
