@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
+import { fetchProducts } from "./Products"; // Import fetchProducts to refresh stock
 
 import "../styles.css"; 
 
@@ -94,7 +95,8 @@ export default function Cart() {
 
       // Clear cart after checkout
       await dispatch(clearCart());
-      dispatch(fetchCart());
+      await dispatch(fetchCart());
+      dispatch(fetchProducts());  // 🔄 Reload products to update stock
 
     } catch (err) {
       console.error("Checkout error:", err);
@@ -105,7 +107,7 @@ export default function Cart() {
   };
 
   return (
-    <div >
+    <div>
       <h1 className="cart-title">Shopping Cart</h1>
       {cartItems.length === 0 ? (
         <p className="cart-empty">Your cart is empty.</p>
