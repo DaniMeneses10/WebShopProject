@@ -3,31 +3,33 @@ import { useSelector, useDispatch } from "react-redux";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../services/api";
 
-// 🔹 Obtener Carrito
+import "../styles.css"; 
+
+// Fetch Cart Items
 export const fetchCart = createAsyncThunk("cart/fetch", async () => {
   const response = await api.get("/ShoppingCart");
   return response.data.items || [];
 });
 
-// 🔹 Agregar al Carrito
+// Add Item to Cart
 export const addToCart = createAsyncThunk("cart/addToCart", async (product) => {
   await api.post("/ShoppingCart/add", product);
   return product;
 });
 
-// 🔹 Eliminar del Carrito
+// Remove Item from Cart
 export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (productId) => {
   await api.delete(`/ShoppingCart/remove/${productId}`);
   return productId;
 });
 
-// 🔹 Limpiar Carrito
+// Clear Cart
 export const clearCart = createAsyncThunk("cart/clearCart", async () => {
   await api.delete("/ShoppingCart/clear");
   return [];
 });
 
-// 🔹 Slice del Carrito
+// Cart Slice
 const cartSlice = createSlice({
   name: "cart",
   initialState: { items: [], totalAmount: 0 },
@@ -43,8 +45,7 @@ const cartSlice = createSlice({
         state.items = action.payload;
       })
       .addCase(addToCart.fulfilled, (state, action) => {
-        console.log("Producto agregado:", action.payload);
-
+        console.log("Item added:", action.payload);
         const existingItem = state.items.find((item) => item.productID === action.payload.productID);
 
         if (existingItem) {
@@ -54,11 +55,11 @@ const cartSlice = createSlice({
         }
       })
       .addCase(removeFromCart.fulfilled, (state, action) => {
-        console.log("Producto eliminado:", action.payload);
+        console.log("Item removed:", action.payload);
         state.items = state.items.filter((item) => item.productID !== action.payload);
       })
       .addCase(clearCart.fulfilled, (state) => {
-        state.items = []; // 🔹 Asegura que el estado del carrito se vacíe correctamente
+        state.items = [];
       });
   },
 });
@@ -88,12 +89,12 @@ export default function Cart() {
 
       if (!response.data.orderID) throw new Error("Invalid Order Response");
 
-      // Mostrar alerta con los detalles de la orden
+      // Show alert with order details
       alert(`✅ Order placed successfully!\n🛒 Order ID: ${response.data.orderID}\n💰 Amount: $${response.data.amount}`);
 
-      // Limpiar el carrito después del checkout
+      // Clear cart after checkout
       await dispatch(clearCart());
-      dispatch(fetchCart()); // 🔹 Refrescar el estado del carrito para asegurar que quede vacío
+      dispatch(fetchCart());
 
     } catch (err) {
       console.error("Checkout error:", err);
@@ -104,31 +105,31 @@ export default function Cart() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold">Shopping Cart</h1>
+    <div >
+      <h1 className="cart-title">Shopping Cart</h1>
       {cartItems.length === 0 ? (
-        <p>Your cart is empty.</p>
+        <p className="cart-empty">Your cart is empty.</p>
       ) : (
         <>
-          <table className="w-full border-collapse border border-gray-300 mt-4">
+          <table className="cart-table">
             <thead>
-              <tr className="bg-gray-200">
-                <th className="border p-2">Product</th>
-                <th className="border p-2">Quantity</th>
-                <th className="border p-2">Total</th>
-                <th className="border p-2">Actions</th>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {cartItems.map((item) => (
                 <tr key={item.productID}>
-                  <td className="border p-2">{item.name}</td>
-                  <td className="border p-2">{item.quantity}</td>
-                  <td className="border p-2">${(item.quantity * item.price).toFixed(2)}</td>
+                  <td>{item.name}</td>
+                  <td>{item.quantity}</td>
+                  <td>${(item.quantity * item.price).toFixed(2)}</td>
                   <td>
                     <button 
                       onClick={() => dispatch(removeFromCart(item.productID))} 
-                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      className="btn-remove"
                     >
                       Remove
                     </button>
@@ -137,7 +138,11 @@ export default function Cart() {
               ))}
             </tbody>
           </table>
-          <button onClick={handleCheckout} disabled={loading} className="bg-green-500 text-white px-4 py-2 mt-4 rounded">
+          <button 
+            onClick={handleCheckout} 
+            disabled={loading} 
+            className="btn-checkout"
+          >
             {loading ? "Processing..." : "Checkout"}
           </button>
         </>

@@ -5,6 +5,8 @@ import Cart from "./Cart";
 import api from "../services/api";
 import { addToCart } from "./Cart";
 
+import "../styles.css"; 
+
 const productSlice = createSlice({
   name: "products",
   initialState: { items: [], status: "idle", error: null },
@@ -25,7 +27,7 @@ const productSlice = createSlice({
   },
 });
 
-// 🔹 Obtener Productos
+// Fetch Products
 export const fetchProducts = createAsyncThunk(
   "products/fetch",
   async (_, { rejectWithValue }) => {
@@ -52,7 +54,7 @@ export default function Products() {
 
   const handleAddToCart = (product) => {
     if (!product.productID) {
-      console.error("Error: el producto no tiene productID definido", product);
+      console.error("Error: The product does not have a productID defined", product);
       return;
     }
 
@@ -70,45 +72,35 @@ export default function Products() {
     return <p className="p-4 text-lg text-red-500">Error: {error}</p>;
 
   return (
-    <div className="flex gap-6 p-6 max-w-screen-xl mx-auto">
-      {/* Tabla de productos */}
-      <div className="w-3/4">
-        <h1 className="text-2xl font-bold mb-4">Product Catalog</h1>
+    <div className="container">
+      {/* Product Table */}
+      <div className="product-table-container">
+        <h1 className="title">Product Catalog</h1>
         {items.length === 0 ? (
-          <p className="text-gray-500">No products available.</p>
+          <p className="no-products">No products available.</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-300">
+          <table className="product-table">
             <thead>
-              <tr className="bg-gray-200">
-                <th className="border p-2">Product</th>
-                <th className="border p-2">Code</th>
-                <th className="border p-2">Price</th>
-                <th className="border p-2">Stock</th>
-                <th className="border p-2">Actions</th>
+              <tr className="header-row">
+                <th>Product</th>
+                <th>Code</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.map((product) => (
                 <tr key={product.productID} className="text-center">
-                  <td className="border p-2">{product.name}</td>
-                  <td className="border p-2">{product.code}</td>
-                  <td className="border p-2">
-                    ${product.price ? product.price.toFixed(2) : "0.00"}
-                  </td>
-                  <td
-                    className={`border p-2 ${
-                      product.stock > 0 ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
+                  <td>{product.name}</td>
+                  <td>{product.code}</td>
+                  <td>${product.price ? product.price.toFixed(2) : "0.00"}</td>
+                  <td className={product.stock > 0 ? "text-green" : "text-red"}>
                     {product.stock || 0}
                   </td>
-                  <td className="border p-2">
+                  <td>
                     <button
-                      className={`text-white px-4 py-2 rounded ${
-                        product.stock > 0
-                          ? "bg-blue-500 hover:bg-blue-600"
-                          : "bg-gray-500 cursor-not-allowed"
-                      }`}
+                      className={`btn-primary ${product.stock > 0 ? "" : "btn-disabled"}`}
                       onClick={() => handleAddToCart(product)}
                       disabled={!product.stock || product.stock < 1}
                     >
@@ -122,8 +114,8 @@ export default function Products() {
         )}
       </div>
 
-      {/* Carrito de compras */}
-      <div className="w-1/4 bg-gray-100 p-4 shadow-md rounded-md h-fit sticky top-6">
+      {/* Shopping Cart - Positioned to the right */}
+      <div className="cart-container">
         <Cart />
       </div>
     </div>
