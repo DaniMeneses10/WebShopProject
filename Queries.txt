@@ -1,0 +1,45 @@
+CREATE TABLE Products (
+    ProductID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Code NVARCHAR(50) NOT NULL UNIQUE,
+    Description NVARCHAR(MAX),
+    Price DECIMAL(10, 2) NOT NULL,
+    Stock INT NOT NULL
+);
+
+CREATE TABLE Categories (
+    CategoryID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE Customers (
+    CustomerID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE TABLE Orders (
+    OrderID INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    OrderDate DATETIME NOT NULL DEFAULT GETDATE(),
+    TotalAmount DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+CREATE TABLE ProductsOrder (
+    OrderID INT NOT NULL,
+    ProductID INT NOT NULL,
+    Quantity INT NOT NULL,
+    LineTotal DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (OrderID, ProductID),
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+
+CREATE TABLE CategoriesProduct (
+    ProductID INT NOT NULL,
+    CategoryID INT NOT NULL,
+    PRIMARY KEY (ProductID, CategoryID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID),
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+);
