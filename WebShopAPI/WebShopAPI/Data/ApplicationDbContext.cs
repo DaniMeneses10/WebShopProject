@@ -9,7 +9,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Order> Orders { get; set; }
-    public DbSet<ProductsOrder> ProductsOrders { get; set; }
+    public DbSet<ProductsOrder> ProductsOrder { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

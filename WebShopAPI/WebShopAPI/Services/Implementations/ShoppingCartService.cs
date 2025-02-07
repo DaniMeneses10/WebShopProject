@@ -109,7 +109,6 @@ namespace WebShopAPI.Services.Implementations
 
         public async Task<Order> CheckoutAsync(int customerId)
         {
-            string test = ("Session ID at checkout: " + _httpContextAccessor.HttpContext.Session.Id);
             var cart = GetCart();
 
             if (!cart.Items.Any())
@@ -122,18 +121,53 @@ namespace WebShopAPI.Services.Implementations
 
             try
             {
+                // Create the main order
                 var order = new Order
                 {
                     CustomerID = customerId,
                     OrderDate = DateTime.UtcNow,
-                    TotalAmount = cart.Items.Sum(i => i.Quantity * i.Price) // Ensure total is calculated
+                    TotalAmount = cart.Items.Sum(i => i.Quantity * i.Price) // Calculate total amount
                 };
 
                 order = await _orderRepository.AddAsync(order);
-                Console.WriteLine($"New Order Created: OrderID = {order.OrderID}"); // ✅ Debug Log
+                Console.WriteLine($"New Order Created: OrderID = {order.OrderID}");
 
+                // Process each item in the cart
+                foreach (var item in cart.Items)
+                {
+                    // Validate product stock
+                    var product = await _productRepository.GetByIdAsync(item.ProductID);
+
+                    if (product == null)
+                        throw new KeyNotFoundException($"Product with ID {item.ProductID} not found.");
+
+                    if (product.Stock < item.Quantity)
+                        throw new InvalidOperationException($"Not enough stock for product {product.Name}. Available: {product.Stock}, Requested: {item.Quantity}");
+
+                    // Deduct stock
+                    product.Stock -= item.Quantity;
+                    await _productRepository.UpdateAsync(product);
+
+                    // Create an entry in ProductsOrder
+                    var productsOrder = new ProductsOrder
+                    {
+                        OrderID = order.OrderID,
+                        ProductID = item.ProductID,
+                        Quantity = item.Quantity,
+                        LineTotal = item.Quantity * item.Price // Calculate LineTotal
+                    };
+
+                    await _productsOrderRepository.AddAsync(productsOrder);
+
+                    Console.WriteLine($"Added to order: ProductID = {item.ProductID}, Quantity = {item.Quantity}, LineTotal = {productsOrder.LineTotal}");
+                }
+
+                // Commit the transaction
                 await transaction.CommitAsync();
+
+                // Clear the cart after checkout
                 ClearCart();
+
                 return order;
             }
             catch (Exception ex)
@@ -143,8 +177,5 @@ namespace WebShopAPI.Services.Implementations
                 throw;
             }
         }
-
-
-
     }
 }

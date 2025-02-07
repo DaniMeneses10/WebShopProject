@@ -7,6 +7,20 @@ CREATE TABLE Products (
     Stock INT NOT NULL
 );
 
+INSERT INTO Products (Name, Code, Description, Price, Stock)
+VALUES 
+('Product A', 'CODE001', 'Description of Product A', 29.99, 100),
+('Product B', 'CODE002', 'Description of Product B', 49.99, 50),
+('Product C', 'CODE003', 'Description of Product C', 19.99, 200),
+('Product D', 'CODE004', 'Description of Product D', 99.99, 30),
+('Product E', 'CODE005', 'Description of Product E', 15.99, 150),
+('Product F', 'CODE006', 'Description of Product F', 25.49, 80),
+('Product G', 'CODE007', 'Description of Product G', 75.00, 60),
+('Product H', 'CODE008', 'Description of Product H', 10.00, 300),
+('Product I', 'CODE009', 'Description of Product I', 45.00, 20),
+('Product J', 'CODE010', 'Description of Product J', 99.95, 10);
+
+
 CREATE TABLE Categories (
     CategoryID INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(100) NOT NULL UNIQUE
@@ -17,6 +31,9 @@ CREATE TABLE Customers (
     Name NVARCHAR(100) NOT NULL,
     Email NVARCHAR(150) NOT NULL UNIQUE
 );
+
+INSERT INTO Customers (Name, Email)
+VALUES ('John Doe', 'john.doe@example.com');
 
 CREATE TABLE Orders (
     OrderID INT IDENTITY(1,1) PRIMARY KEY,
