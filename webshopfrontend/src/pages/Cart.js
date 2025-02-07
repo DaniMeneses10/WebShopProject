@@ -56,7 +56,10 @@ const cartSlice = createSlice({
       .addCase(removeFromCart.fulfilled, (state, action) => {
         console.log("Producto eliminado:", action.payload);
         state.items = state.items.filter((item) => item.productID !== action.payload);
-      }); 
+      })
+      .addCase(clearCart.fulfilled, (state) => {
+        state.items = []; // 🔹 Asegura que el estado del carrito se vacíe correctamente
+      });
   },
 });
 
@@ -82,12 +85,19 @@ export default function Cart() {
     try {
       const response = await api.post(`/ShoppingCart/checkout/1`);
       console.log("Backend response:", response.data);
+
       if (!response.data.orderID) throw new Error("Invalid Order Response");
 
-      alert(`Order placed successfully! Order ID: ${response.data.orderID}`);
-      dispatch(clearCart());
+      // Mostrar alerta con los detalles de la orden
+      alert(`✅ Order placed successfully!\n🛒 Order ID: ${response.data.orderID}\n💰 Amount: $${response.data.amount}`);
+
+      // Limpiar el carrito después del checkout
+      await dispatch(clearCart());
+      dispatch(fetchCart()); // 🔹 Refrescar el estado del carrito para asegurar que quede vacío
+
     } catch (err) {
       console.error("Checkout error:", err);
+      alert("❌ Error processing order. Please try again.");
     }
 
     setLoading(false);
