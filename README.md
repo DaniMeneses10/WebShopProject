@@ -6,9 +6,8 @@
 - Navigate to the folder where you want to clone the repository.
 - Run the following command to clone the repository:
   ```
-  git clone https://github.com/your-username/webshop-project.git
+  git clone https://github.com/DaniMeneses10/WebShopProject.git
   ```
-  *(Replace `https://github.com/your-username/webshop-project.git` with the actual repository URL.)*
 
 - Navigate to the project directory:
   ```
@@ -22,7 +21,7 @@
 ### 2.1 Navigate to the Backend Folder
 - Open the terminal and navigate to the backend folder:
   ```
-  cd backend
+  cd backend - WebShopApi
   ```
 
 ### 2.2 Restore NuGet Packages
@@ -100,22 +99,6 @@
 
 - **API connection issues**:
   - Ensure the backend is running on `https://localhost:5001` and accessible.
-
----
-
-## 6. Deployment (Optional)
-
-### 6.1 Backend Deployment
-- Publish the application using:
-  ```
-  dotnet publish
-  ```
-
-### 6.2 Frontend Deployment
-- Build the application using:
-  ```
-  npm run build
-  ```
 
 ---
 

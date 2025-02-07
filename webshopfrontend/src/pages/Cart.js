@@ -85,7 +85,9 @@ export default function Cart() {
     setLoading(true);
 
     try {
-      const response = await api.post(`/ShoppingCart/checkout/1`);
+      //Supose customer ID is 1
+      const customerID = 1;
+      const response = await api.post(`/ShoppingCart/checkout/${customerID}`);
       console.log("Backend response:", response.data);
 
       if (!response.data.orderID) throw new Error("Invalid Order Response");
